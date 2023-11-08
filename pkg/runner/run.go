@@ -30,7 +30,7 @@ func (r *Runner) Run(e *echo.Echo) error {
 
 	for _, service := range r.services {
 		if err := service.Start(ctx); err != nil {
-			return fmt.Errorf("failed to start service")
+			return fmt.Errorf("failed to start usecase")
 		}
 	}
 
@@ -51,7 +51,7 @@ func (r *Runner) Run(e *echo.Echo) error {
 
 	for i := len(r.services) - 1; i >= 0; i-- {
 		if err := r.services[i].Shutdown(ctx); err != nil {
-			return fmt.Errorf("failed to stop service")
+			return fmt.Errorf("failed to stop usecase")
 		}
 	}
 

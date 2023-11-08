@@ -11,8 +11,8 @@ type Api struct {
 }
 
 type Application interface {
-	GetUser(ctx context.Context, name string) (string, error)
-	SendUser(ctx context.Context, user string) error
+	GetUserUseCase(ctx context.Context, name string) (string, error)
+	SendUserUseCase(ctx context.Context, user string) error
 }
 
 func NewHandler(service Application) *Api {
@@ -26,6 +26,6 @@ func (a *Api) Setup(s *echo.Echo) {
 }
 
 func (a *Api) HandlerTake(c echo.Context) error {
-	a.app.SendUser(c.Request().Context(), "user")
-	return c.JSON(200, "barra")
+	as, _ := a.app.GetUserUseCase(c.Request().Context(), "user")
+	return c.JSON(200, as)
 }

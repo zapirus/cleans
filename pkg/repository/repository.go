@@ -53,10 +53,10 @@ func (p *Postgres) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (p *Postgres) GetUser(ctx context.Context, name string) (string, error) {
-	return "", nil
+func (p *Postgres) GetUserRepo(ctx context.Context, name string) (string, error) {
+	return "verify", nil
 }
-func (p *Postgres) SendUser(ctx context.Context, user string) error {
+func (p *Postgres) SendUserRepo(ctx context.Context, user string) error {
 	err := p.conn.QueryRow(ctx, "INSERT INTO users (name) VALUES ($1)", user)
 	if err != nil {
 		return errors.New("")

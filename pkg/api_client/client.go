@@ -27,6 +27,6 @@ func (c *Client) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) SendUser(ctx context.Context, user string) error {
+func (c *Client) SendUserClient(ctx context.Context, user string) error {
 	return nil
 }
