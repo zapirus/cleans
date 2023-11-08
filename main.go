@@ -9,7 +9,7 @@ import (
 	"clean/pkg/api_client"
 	"clean/pkg/repository"
 	"clean/pkg/runner"
-	"clean/service"
+	"clean/usecase"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 
 	repo := repository.NewPostgres(&cfg.repositoryConf)
 	apiClient := api_client.New(&cfg.apiClientConf)
-	services := service.New(repo, apiClient)
+	services := usecase.New(repo, apiClient)
 
 	serv := handlers.NewHandler(services)
 
