@@ -24,6 +24,16 @@ type Postgres struct {
 	conn *pgx.Conn
 }
 
+//func (p *Postgres) GetUserRepo(ctx context.Context, name string) (string, error) {
+//	//TODO implement me
+//	panic("implement me")
+//}
+//
+//func (p *Postgres) SendUserRepo(ctx context.Context, user string) error {
+//	//TODO implement me
+//	panic("implement me")
+//}
+
 func NewPostgres(cfg *Configs) *Postgres {
 	p := &Postgres{
 		cfg: cfg,

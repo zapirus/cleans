@@ -2,13 +2,7 @@ package runner
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
-	"os"
-	"os/signal"
-
-	"github.com/labstack/echo"
 )
 
 type StartStopInterface interface {
@@ -25,7 +19,7 @@ func New(services ...StartStopInterface) *Runner {
 		services: services,
 	}
 }
-func (r *Runner) Run(e *echo.Echo) error {
+func (r *Runner) Run() error {
 	ctx := context.Background()
 
 	for _, service := range r.services {
@@ -34,20 +28,7 @@ func (r *Runner) Run(e *echo.Echo) error {
 		}
 	}
 
-	go func() {
-		if err := e.Start(":1323"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			e.Logger.Fatal("shutting down the server")
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
-	}
-
-	fmt.Println("\tshutting down the server")
+	fmt.Println("\tshutting down the services")
 
 	for i := len(r.services) - 1; i >= 0; i-- {
 		if err := r.services[i].Shutdown(ctx); err != nil {
