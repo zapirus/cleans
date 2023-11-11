@@ -9,6 +9,7 @@ import (
 	"clean/pkg/api_client"
 	"clean/pkg/repository"
 	"clean/pkg/runner"
+	"clean/pkg/server"
 	"clean/usecase"
 )
 
@@ -24,16 +25,19 @@ func main() {
 
 	serv := handlers.NewHandler(services)
 
-	e := echo.New()
-	serv.Setup(e)
-	runServ := []runner.StartStopInterface{
+	echoServer := echo.New()
+	serv.Setup(echoServer)
+	newEchoServer := server.NewServer(echoServer)
+
+	runServices := []runner.StartStopInterface{
 		apiClient,
 		repo,
 		services,
+		newEchoServer,
 	}
 
-	r := runner.New(runServ...)
-	if err := r.Run(e); err != nil {
+	r := runner.New(runServices...)
+	if err := r.Run(); err != nil {
 		log.Fatal(err)
 	}
 
