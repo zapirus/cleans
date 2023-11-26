@@ -32,7 +32,6 @@ func main() {
 	runServices := []runner.StartStopInterface{
 		apiClient,
 		repo,
-		services,
 		newEchoServer,
 	}
 

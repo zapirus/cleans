@@ -4,16 +4,32 @@ import (
 	"context"
 
 	"github.com/labstack/echo"
+
+	"clean/pkg/types"
 )
+
+const statusSuccess status = "success"
+const statusError status = "error"
 
 type Api struct {
 	app Application
 }
 
 type Application interface {
-	GetUserUseCase(ctx context.Context, name string) (string, error)
-	SendUserUseCase(ctx context.Context, user string) error
+	Login(ctx context.Context, login, password string) (*string, error)
+	Register(ctx context.Context, user *types.User) (*string, error)
+	Verify(ctx context.Context, guid, verify string) error
+	Reset(ctx context.Context, login, password, retryPassword string) error
+	Resend(ctx context.Context, login, password string) error
 }
+
+type response struct {
+	Body    any    `json:"body,omitempty"`
+	Status  status `json:"status,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type status string
 
 func NewHandler(service Application) *Api {
 	return &Api{
@@ -22,10 +38,15 @@ func NewHandler(service Application) *Api {
 }
 
 func (a *Api) Setup(s *echo.Echo) {
-	s.GET("/user", a.HandlerTake)
-}
 
-func (a *Api) HandlerTake(c echo.Context) error {
-	as, _ := a.app.GetUserUseCase(c.Request().Context(), "user")
-	return c.JSON(200, as)
+	v1 := s.Group("/v1")
+	v1.POST("", a.login)   // change
+	v1.DELETE("", a.login) // delete
+
+	v1.POST("/register", a.register)
+	v1.POST("/login", a.login)
+	v1.POST("/verify", a.verify)
+	v1.POST("/reset", a.reset)
+
+	v1.POST("/resend", a.resend)
 }

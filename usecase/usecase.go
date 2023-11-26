@@ -2,54 +2,54 @@ package usecase
 
 import (
 	"context"
-	"fmt"
+
+	"clean/pkg/types"
 )
 
 type UseCase struct {
-	repo      RepositoryInterface
+	repo      RepoCaseInterface
 	apiClient ApiClientInterface
 }
 
-type RepositoryInterface interface {
-	GetUserRepo(ctx context.Context, name string) (string, error)
-	SendUserRepo(ctx context.Context, user string) error
+type RepoCaseInterface interface {
+	Login(ctx context.Context, login, password string) (*string, error)
+	Register(ctx context.Context, user *types.User) (*string, error)
+	Verify(ctx context.Context, guid, verify string) error
+	Reset(ctx context.Context, login, password, retryPassword string) error
+	Resend(ctx context.Context, login, password string) error
 }
 
 type ApiClientInterface interface {
 	SendUserClient(ctx context.Context, user string) error
 }
 
-func New(repo RepositoryInterface, apiClient ApiClientInterface) *UseCase {
+func New(repo RepoCaseInterface, apiClient ApiClientInterface) *UseCase {
 	return &UseCase{
 		repo:      repo,
 		apiClient: apiClient,
 	}
 }
 
-func (u *UseCase) Start(ctx context.Context) error {
-	fmt.Println("start usecase")
+func (u *UseCase) Login(ctx context.Context, login, password string) (*string, error) {
+	us, err := u.repo.Login(ctx, login, password)
+	return us, err
+}
 
+func (u *UseCase) Register(ctx context.Context, user *types.User) (*string, error) {
+	us, err := u.repo.Register(ctx, user)
+	return us, err
+}
+
+func (u *UseCase) Verify(ctx context.Context, guid, verify string) error {
+	err := u.repo.Verify(ctx, guid, verify)
+	return err
+}
+
+func (u *UseCase) Reset(ctx context.Context, login, password, retryPassword string) error {
+	err := u.repo.Reset(ctx, login, password, retryPassword)
+	return err
+}
+func (u *UseCase) Resend(ctx context.Context, login, password string) error {
+	u.repo.Resend(ctx, login, password)
 	return nil
-}
-
-func (u *UseCase) Shutdown(ctx context.Context) error {
-	fmt.Println("stop usecase")
-	return nil
-}
-
-func (u *UseCase) GetUserUseCase(ctx context.Context, name string) (string, error) {
-	user, err := u.repo.GetUserRepo(ctx, name)
-	if err != nil {
-		return "", err
-	}
-
-	if user != "verify" {
-		return "not verify", fmt.Errorf("no verify")
-	}
-
-	return user, nil
-}
-
-func (u *UseCase) SendUserUseCase(ctx context.Context, user string) error {
-	return u.repo.SendUserRepo(ctx, user)
 }

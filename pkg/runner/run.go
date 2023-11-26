@@ -24,7 +24,7 @@ func (r *Runner) Run() error {
 
 	for _, service := range r.services {
 		if err := service.Start(ctx); err != nil {
-			return fmt.Errorf("failed to start usecase")
+			return fmt.Errorf("failed to start: %s", err)
 		}
 	}
 
