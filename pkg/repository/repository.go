@@ -12,12 +12,12 @@ import (
 )
 
 type Configs struct {
-	Host     string `env:"host"`
-	Port     string `env:"port"`
-	Username string `env:"username"`
-	Password string `env:"password"`
-	DBName   string `env:"dbname"`
-	SSLMode  string `env:"sslmode"`
+	Host     string `env:"HOST"`
+	Port     string `env:"PORT"`
+	User     string `env:"USERS"`
+	Password string `env:"PASSWORD"`
+	DBName   string `env:"DBNAME"`
+	SSLMode  string `env:"SSLMODE"`
 }
 
 type Postgres struct {
@@ -33,8 +33,8 @@ func NewPostgres(cfg *Configs) *Postgres {
 func (p *Postgres) Start(ctx context.Context) error {
 	fmt.Println("start postgres")
 
-	connDB := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		p.cfg.Username, p.cfg.Password, p.cfg.Host, p.cfg.Port, p.cfg.DBName, p.cfg.SSLMode)
+	connDB := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", p.cfg.User, p.cfg.Password, p.cfg.Host, p.cfg.Port, p.cfg.DBName, p.cfg.SSLMode)
+
 	conn, err := pgx.Connect(ctx, connDB)
 	if err != nil {
 		return err
@@ -53,8 +53,8 @@ func (p *Postgres) Shutdown(ctx context.Context) error {
 }
 
 func (p *Postgres) Login(ctx context.Context, login, password string) (*string, error) {
-	query := "SELECT id FROM users WHERE login = $1 AND password = $2 LIMIT 1"
 	var userID string
+	query := "SELECT login FROM users WHERE login = $1 AND password = $2 LIMIT 1"
 	err := p.conn.QueryRow(ctx, query, login, password).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -66,26 +66,46 @@ func (p *Postgres) Login(ctx context.Context, login, password string) (*string, 
 }
 
 func (p *Postgres) Register(ctx context.Context, user *types.User) (*string, error) {
-	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id"
 	var userID string
-	err := p.conn.QueryRow(ctx, query, user.Login, user.Password, user.Name, user.Email, user.Guid).Scan(&userID)
+	val := p.checkLogin(ctx, user.Login)
+
+	if val {
+		return &userID, fmt.Errorf("пользователь с логином - %s уже существует. Попробуйте другой логин", user.Login)
+	}
+
+	query := "INSERT INTO users (login, password, name, email) VALUES ($1, $2, $3, $4) RETURNING login"
+
+	err := p.conn.QueryRow(ctx, query, user.Login, user.Password, user.Name, user.Email).Scan(&userID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &userID, nil
 }
 
-func (p *Postgres) Verify(ctx context.Context, guid, verify string) error {
-	//TODO implement me
-	panic("implement me")
+func (p *Postgres) Reset(ctx context.Context, login string) (*string, error) {
+	var userID string
+	query := "SELECT email FROM users WHERE login = $1  LIMIT 1"
+	err := p.conn.QueryRow(ctx, query, login).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+	}
+
+	return &userID, nil
 }
 
-func (p *Postgres) Reset(ctx context.Context, login, password, retryPassword string) error {
-	//TODO implement me
-	panic("implement me")
-}
+func (p *Postgres) Verify(ctx context.Context, mail, verifyCode string) (string, error) {
+	login := ""
+	password := ""
 
-func (p *Postgres) Resend(ctx context.Context, login, password string) error {
-	//TODO implement me
-	panic("implement me")
+	query := "SELECT login, password FROM users WHERE email = $1"
+	err := p.conn.QueryRow(ctx, query, mail).Scan(&login, &password)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", fmt.Errorf("user not found")
+	}
+	return "Ваш логин: " + login + " " + "Ваш пароль: " + password, err
 }

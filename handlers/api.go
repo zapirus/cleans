@@ -18,9 +18,9 @@ type Api struct {
 type Application interface {
 	Login(ctx context.Context, login, password string) (*string, error)
 	Register(ctx context.Context, user *types.User) (*string, error)
-	Verify(ctx context.Context, guid, verify string) error
-	Reset(ctx context.Context, login, password, retryPassword string) error
-	Resend(ctx context.Context, login, password string) error
+	Verify(ctx context.Context, mail, verifyCode string) (string, error)
+	Reset(ctx context.Context, login string) (*string, error)
+	Resend(mail string) (string, error)
 }
 
 type response struct {
@@ -40,11 +40,8 @@ func NewHandler(service Application) *Api {
 func (a *Api) Setup(s *echo.Echo) {
 
 	v1 := s.Group("/v1")
-	v1.POST("", a.login)   // change
-	v1.DELETE("", a.login) // delete
-
+	v1.POST("login", a.login)
 	v1.POST("/register", a.register)
-	v1.POST("/login", a.login)
 	v1.POST("/verify", a.verify)
 	v1.POST("/reset", a.reset)
 

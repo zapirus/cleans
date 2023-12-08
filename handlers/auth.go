@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -9,9 +10,11 @@ import (
 )
 
 func (a *Api) login(c echo.Context) error {
-	login := c.FormValue("login")
-	password := c.FormValue("password")
-	val, err := a.app.Login(c.Request().Context(), login, password)
+	user := new(types.User)
+	if err := c.Bind(user); err != nil {
+		return err
+	}
+	val, err := a.app.Login(c.Request().Context(), user.Login, user.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response{
 			Status:  statusError,
@@ -25,15 +28,12 @@ func (a *Api) login(c echo.Context) error {
 }
 
 func (a *Api) register(c echo.Context) error {
-
-	user := &types.User{
-		Guid:       c.FormValue("guid"),
-		Login:      c.FormValue("login"),
-		Password:   c.FormValue("password"),
-		Name:       c.FormValue("name"),
-		Email:      c.FormValue("email"),
-		VerifyCode: c.FormValue("verify"),
+	user := new(types.User)
+	if err := c.Bind(user); err != nil {
+		return err
 	}
+
+	fmt.Println("user", user)
 	regUser, err := a.app.Register(c.Request().Context(), user)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response{
@@ -49,46 +49,61 @@ func (a *Api) register(c echo.Context) error {
 
 }
 
-func (a *Api) verify(c echo.Context) error {
-	guid := c.FormValue("guid")
-	verify := c.FormValue("verify")
-	err := a.app.Verify(c.Request().Context(), guid, verify)
+func (a *Api) reset(c echo.Context) error {
+	user := new(types.User)
+	if err := c.Bind(user); err != nil {
+		return err
+	}
+
+	resetUser, err := a.app.Reset(c.Request().Context(), user.Login)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response{
+		return c.JSON(http.StatusBadRequest, response{
 			Status:  statusError,
 			Message: err.Error(),
 		})
 	}
 	return c.JSON(http.StatusOK, response{
-		Status:  statusSuccess,
-		Message: "",
+		Status: statusSuccess,
+		Body:   "Мы отправили вам код на почту: " + *resetUser,
 	})
-
 }
 
-func (a *Api) reset(c echo.Context) error {
-	login := c.FormValue("login")
-	password := c.FormValue("password")
-	retryPassword := c.FormValue("retryPassword")
-	if err := a.app.Reset(c.Request().Context(), login, password, retryPassword); err != nil {
-		c.JSON(http.StatusNotFound, response{
+func (a *Api) verify(c echo.Context) error {
+	user := new(types.User)
+	if err := c.Bind(user); err != nil {
+		return err
+	}
+
+	verifyUser, err := a.app.Verify(c.Request().Context(), user.Email, user.VerifyCode)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{
 			Status:  statusError,
 			Message: err.Error(),
 		})
 	}
-
 	return c.JSON(http.StatusOK, response{
-		Status:  statusSuccess,
-		Message: "Пароль сброшен",
+		Status: statusSuccess,
+		Body:   verifyUser,
 	})
+
 }
 
 func (a *Api) resend(c echo.Context) error {
-	login := c.FormValue("login")
-	password := c.FormValue("password")
-	if err := a.app.Resend(c.Request().Context(), login, password); err != nil {
-		return c.JSON(http.StatusBadRequest, response{Status: statusError, Message: err.Error()})
+	user := new(types.User)
+	if err := c.Bind(user); err != nil {
+		return err
 	}
-	return c.JSON(http.StatusOK, response{Status: statusSuccess, Body: "Пароль успешно отправлен на почту"})
+
+	resendCode, err := a.app.Resend(user.Email)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{
+			Status:  statusError,
+			Message: err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, response{
+		Status: statusSuccess,
+		Body:   resendCode,
+	})
 
 }
