@@ -26,16 +26,16 @@ func (c *Server) Start(ctx context.Context) error {
 			c.echo.Logger.Fatal("shutting down the server")
 		}
 	}()
+	return nil
+}
+
+func (c *Server) Shutdown(ctx context.Context) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	if err := c.echo.Shutdown(ctx); err != nil {
 		c.echo.Logger.Fatal(err)
 	}
-	return nil
-}
-
-func (c *Server) Shutdown(ctx context.Context) error {
-	fmt.Println("stop server")
+	fmt.Println("Stop server")
 	return nil
 }

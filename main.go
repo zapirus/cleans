@@ -7,6 +7,7 @@ import (
 
 	"clean/handlers"
 	"clean/pkg/api_client"
+	"clean/pkg/mail"
 	"clean/pkg/repository"
 	"clean/pkg/runner"
 	"clean/pkg/server"
@@ -19,9 +20,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	repo := repository.NewPostgres(&cfg.repositoryConf)
-	apiClient := api_client.New(&cfg.apiClientConf)
-	services := usecase.New(repo, apiClient)
+	repo := repository.NewPostgres(&cfg.RepositoryConf)
+	apiClient := api_client.New(&cfg.ApiClientConf)
+	mailSender := mail.NewMail(&cfg.MailClientConf)
+
+	services := usecase.New(repo, apiClient, mailSender)
 
 	serv := handlers.NewHandler(services)
 
@@ -32,7 +35,6 @@ func main() {
 	runServices := []runner.StartStopInterface{
 		apiClient,
 		repo,
-		services,
 		newEchoServer,
 	}
 
@@ -40,5 +42,4 @@ func main() {
 	if err := r.Run(); err != nil {
 		log.Fatal(err)
 	}
-
 }

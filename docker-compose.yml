@@ -1,0 +1,33 @@
+version: "3"
+services:
+  cleans:
+    build: .
+    command: ./cleans
+    ports:
+      - "1323:1323"
+    depends_on:
+      - dbs
+    environment:
+      - HOST=dbs
+      - USERS=postgres
+      - PORT=5432
+      - DBNAME=cleans
+      - SSLMODE=disable
+      - PASSWORD=skar4500
+    networks: [ "docker_network" ]
+  dbs:
+    restart: always
+    image: postgres:13.3-alpine
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=cleans
+      - POSTGRES_PASSWORD=skar4500
+    ports:
+      - "5431:5432"
+    networks: [ "docker_network" ]
+networks:
+  docker_network:
+    driver: bridge
+
