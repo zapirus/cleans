@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type StartStopInterface interface {
@@ -21,6 +22,7 @@ func New(services ...StartStopInterface) *Runner {
 }
 func (r *Runner) Run() error {
 	ctx := context.Background()
+	time.Sleep(5 * time.Second)
 
 	for _, service := range r.services {
 		if err := service.Start(ctx); err != nil {
